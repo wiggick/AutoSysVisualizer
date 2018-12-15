@@ -1,6 +1,10 @@
 # AutoSysVisualizer
 A utility for parsing through CA Autosys jil files and producing a DGML file for viewing in Visual Studio.
 
+The generateDGML function in the jilDGML.cfc will take a given directory and parse the jil files, with the end result being a DGML file viewable in Visual Studio 2012/2017 with the DGML viewer.  Below is a simple example showing the grouping of jobs within a box with a couple of external jobs.  External jobs are defined as references to jobs that either do not have a physical jil file or are outside the filtered jobs by group.
+
+<img src="docs/images/simple_example.PNG">
+
 ### The MIT License (MIT)
 Copyright (c) 2018 Christopher Wigginton
 
