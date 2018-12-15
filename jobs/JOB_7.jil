@@ -1,0 +1,22 @@
+/* ----------------- JOB_7 ----------------- */
+update_job: JOB_7 job_type: c
+group: MYGROUP
+box_name: MYJOBS_BX
+command: c\:\perl\bin\perl some_perl_script.pl
+machine: ${myhost}
+owner: ${login}@${domain}
+date_conditions: 1
+days_of_week: mo, tu, we, th, fr
+start_times: "05:45"
+must_complete_times: "6:00"
+run_calendar: company_calendar
+exclude_calendar: custom_exclude_calendar
+start_mins: 0, 15, 30, 45
+run_window: "00:01-18:00"
+permission: gx,wx
+description: "Example Process for JOB 7"
+std_out_file: ${path}\Logs\JOB_7.log
+std_err_file: ${path}\Logs\JOB_7.err
+max_run_alarm: 60
+alarm_if_fail: 1
+timezone: America/Los_Angeles
