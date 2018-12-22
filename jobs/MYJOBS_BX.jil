@@ -1,12 +1,10 @@
 /* ----------------- MYJOBS_BX ----------------- */
 update_job: MYJOBS_BX job_type: b
 group: MYGROUP
-machine: ${myhost}
-owner: ${login}@${domain}
-permission: gx,wx
+machine: SYSTEM1
 description: "Example BOX"
-std_out_file: ${path}\Logs\MYJOBS_BX.log
-std_err_file: ${path}\Logs\MYJOBS_BX.err
+std_out_file: c:\Logs\MYJOBS_BX.log
+std_err_file: c:\Logs\MYJOBS_BX.err
 max_run_alarm: 60
 alarm_if_fail: 1
 timezone: America/Los_Angeles
