@@ -5,6 +5,23 @@ The generateDGML function in the jilDGML.cfc will take a given directory and par
 
 <img src="docs/images/simple_example.PNG">
 
+### How To Use ###
+I haven't built a gui for this, as it's still just a raw utility for me and I instantiate the object and call the method.
+
+`dgml = createObject("component","AutoSysVisualizer.cfcs.jilDGML");`
+
+If you only want to process specific files ased on the jil Group setting.
+
+`dgml.setListGroupFilter("YourGroup");`
+
+Set the WalkFilter and It will locate that job after parsing the files, and will walk the Associated Boxs, Conditions, and Children
+
+`dgml.setWalkFilter("JOB_NAME");`
+
+Give it the path to your folder with the jil files and it will generate the DGML file.
+
+`dgml.generateDGML(expandPath("../jobs"));`
+
 ### The MIT License (MIT)
 Copyright (c) 2018 Christopher Wigginton
 
