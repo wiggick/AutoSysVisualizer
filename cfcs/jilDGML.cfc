@@ -1,12 +1,18 @@
 component displayName="jilDGML" output="false" accessors="true" {
 
     property name="jobs";
+    property name="filteredJobs";
     property name="parser";
     property name="listGroupFilter";
+    property name="walkFilter";
+    property name="dgmlFileName";
 
     public function init(){
         variables.jobs = {};
+        variables.filteredJobs = {};
         variables.listGroupFilter = "";
+        variables.walkFilter = "";
+        variables.dgmlFileName = "AutosysJobs.DGML";
         variables.parser = new jilParser();
 
     }
@@ -21,7 +27,8 @@ component displayName="jilDGML" output="false" accessors="true" {
         return local.job;
     }
 
-    public boolean function hasChild(required struct job,childName){
+
+    public boolean function hasChild(required struct job,string childName){
 
     	if( !StructKeyExists(arguments.job,"children") || !ArrayLen(arguments.job.children) ){
     		return false;
@@ -38,27 +45,28 @@ component displayName="jilDGML" output="false" accessors="true" {
     public function processJobFile(jilText){
         local.processText = variables.parser.removeComments(arguments.jilText);
         local.group = variables.parser.getGroup(local.processText);
-        if(variables.listGroupFilter eq "" or ListFindNoCase(variables.listGroupFilter,group) ){
+        if(variables.listGroupFilter eq "" or ListFindNoCase(variables.listGroupFilter,local.group) ){
             local.jobName =  variables.parser.getJobName(local.processText);
-            local.job = getJob(jobName);
+            local.job = getJob(local.jobName);
             local.boxName = variables.parser.getBoxName(local.processText);
             // This indicates the node was created by an actual file rather than from a child or box from a child
             local.job["isFile"] = true;
             local.jobType =variables.parser.getJobType(local.processText);
-            job["jobName"] =local.jobName;
-            job["boxName"] =local.boxName;
-            job["jobType"] =local.jobType;
-            job["conditions"] = variables.parser.getConditions(local.processText);
+            local.job["jobName"] =local.jobName;
+            local.job["boxName"] =local.boxName;
+            local.job["jobType"] =local.jobType;
+            local.job["conditions"] = variables.parser.getConditions(local.processText);
 
-            if( isArray(job["conditions"]) and ArrayLen(job["conditions"] )  ){
-               for(local.condition in job["conditions"] )	{
+
+            if( isArray(local.job["conditions"]) and ArrayLen(local.job["conditions"] )  ){
+               for(local.condition in local.job["conditions"] )	{
                	    //we don't have to do anything here, the act of getting it creates it if necessary'
                		local.target = getJob( local.condition.target );
                }
             }
 
-            if(lcase(jobType) != "b"){
-                local.boxName = variables.parser.getBoxName(local.processText);
+            //if(lcase(local.jobType) != "b"){
+               // local.boxName = variables.parser.getBoxName(local.processText);
                 if(local.boxName != ""){
                     local.box = getJob(local.boxName);
                     if( ! hasChild(local.box,local.jobName) ){
@@ -66,7 +74,7 @@ component displayName="jilDGML" output="false" accessors="true" {
                     }
                 }
 
-            }
+           // }
        }
     }
 
@@ -80,6 +88,67 @@ component displayName="jilDGML" output="false" accessors="true" {
             processJobFile(local.jilText);
         }
         return variables.jobs;
+    }
+
+    function addFilteredJob( required struct job ){
+
+    	   local.filteredJob = arguments.job;
+    	   local.filteredJob.isFiltered = true;
+
+
+    	  if(! StructKeyExists(variables.filteredJobs,local.filteredJob.jobName) ){
+    	   		variables.filteredJobs[local.filteredJob.jobName] = local.filteredJob;
+    	   }
+
+
+    	   if( StructKeyExists(local.filteredJob,"boxName") and len(local.filteredJob.boxName) and ! StructKeyExists(variables.filteredJobs,local.filteredJob.boxName) ){
+    	   		variables.filteredJobs[local.filteredJob.boxName] = getJob(local.filteredJob.boxName);
+    	   }
+
+    	   if( ArrayLen(local.filteredJob.conditions) ){
+    	   		for(local.condition in local.filteredJob.conditions ){
+  	   				if(! StructKeyExists(variables.filteredJobs,local.condition.target) ){
+  	   					variables.filteredJobs[local.condition.target] = getJob(local.condition.target);
+  	   				}
+    	   		}
+    	   }
+
+    	   if( ArrayLen(local.filteredJob.children) ){
+    	   		for(local.child in local.filteredJob.children ){
+  	   				if(! StructKeyExists(variables.filteredJobs,local.child) ){
+  	   					variables.filteredJobs[local.child] = getJob(local.child);
+  	   				}
+    	   		}
+    	   }
+    }
+
+    public boolean function lookForUnfilteredJob(){
+
+    	for(local.filteredJob in variables.filteredJobs){
+    		if( ! StructKeyExists( variables.filteredJobs[local.filteredJob],"isFiltered") ){
+    			addFilteredJob(variables.filteredJobs[local.filteredJob]);
+    			return true;
+    		}
+    	}
+    	return false;
+    }
+
+
+    function processWalkFilter(){
+    	if( variables.walkFilter neq "" and StructKeyExists(variables.jobs,variables.walkFilter)){
+    		local.targetJob = getJob(variables.walkFilter);
+
+    		variables.filteredJobs = {};
+
+    		addFilteredJob( local.targetJob );
+
+
+    		//now continually loop until we can't find a job that is marked as filtered
+    		do {
+    			local.result = lookForUnfilteredJob();
+    		} while (local.result eq true  );
+
+    	}
     }
 
     function createNodeNoNameSpace(objXML,name,struct attributes){
@@ -121,9 +190,16 @@ component displayName="jilDGML" output="false" accessors="true" {
         local.nodes = createNodeNoNameSpace(local.objDGML,"Nodes");
         local.links = createNodeNoNameSpace(local.objDGML,"Links");
         getJobs(arguments.jobDir);
+        processWalkFilter();
 
-        for (local.jobName in variables.jobs){
-           local.job = variables.jobs[local.jobName];
+        if(! StructIsEmpty(variables.filteredJobs) ){
+    			local.jobs = variables.filteredJobs;
+    	}else{
+    		local.jobs = variables.jobs;
+    	}
+
+        for (local.jobName in local.jobs){
+           local.job = local.jobs[local.jobName];
 
             if( (StructKeyExists(local.job,"jobType") && lcase(local.job.jobType) == 'b' ) || right(local.jobName,3) == "_BX" ){
                 local.nodeCategory = ( StructKeyExists(local.job,"isFile") ? "Box" : "ExternalBox");
@@ -167,11 +243,18 @@ component displayName="jilDGML" output="false" accessors="true" {
         }
 
 
-
         local.objDGML.xmlRoot.links= local.links;
         local.objDGML.xmlRoot.nodes= local.nodes;
 
-        FileWrite("#expandPath("../")#\AutosysJobs.DGML",local.objDGML);
+        if(variables.walkFilter neq ""){
+        	local.fileName = variables.walkFilter & "_" & variables.dgmlFileName;
+        }else{
+        	local.fileName = variables.dgmlFileName;
+        }
+
+
+
+        FileWrite("#expandPath("../")#\#local.fileName#",local.objDGML);
 
     }
 
