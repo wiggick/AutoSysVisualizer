@@ -65,16 +65,13 @@ component displayName="jilDGML" output="false" accessors="true" {
                }
             }
 
-            //if(lcase(local.jobType) != "b"){
-               // local.boxName = variables.parser.getBoxName(local.processText);
-                if(local.boxName != ""){
-                    local.box = getJob(local.boxName);
-                    if( ! hasChild(local.box,local.jobName) ){
-                    	arrayAppend(local.box.children,local.jobName);
-                    }
-                }
 
-           // }
+            if(local.boxName != ""){
+                local.box = getJob(local.boxName);
+                if( ! hasChild(local.box,local.jobName) ){
+                	arrayAppend(local.box.children,local.jobName);
+                }
+            }
        }
     }
 
