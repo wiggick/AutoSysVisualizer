@@ -10,7 +10,7 @@ I haven't built a gui for this, as it's still just a raw utility for me and I in
 
 `dgml = createObject("component","AutoSysVisualizer.cfcs.jilDGML");`
 
-If you only want to process specific files ased on the jil Group setting.
+You can limit the process to specific files in a group by using the jil Group Filter setting.
 
 `dgml.setListGroupFilter("YourGroup");`
 
